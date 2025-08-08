@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Plus, Upload, Eye, Check, X } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-
+import { ImportNFeDialog } from "@/components/purchases/ImportNFeDialog"
 interface Supplier {
   id: string
   name: string
@@ -53,6 +53,7 @@ export default function PurchasesPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [showNewPurchase, setShowNewPurchase] = useState(false)
   const [showNewSupplier, setShowNewSupplier] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   
   const [formData, setFormData] = useState({
     supplier_id: '',
@@ -264,9 +265,9 @@ export default function PurchasesPage() {
             <Plus className="h-4 w-4 mr-2" />
             Nova Compra
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setShowImport(true)} className="hover-scale">
             <Upload className="h-4 w-4 mr-2" />
-            Importar NFe
+            Importar Compra (XML/PDF)
           </Button>
         </div>
       </div>
@@ -555,6 +556,8 @@ export default function PurchasesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportNFeDialog open={showImport} onOpenChange={setShowImport} suppliers={suppliers} ingredients={ingredients} onImported={fetchData} />
     </div>
   )
 }
