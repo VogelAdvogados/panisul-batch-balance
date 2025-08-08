@@ -1,1 +1,4 @@
 project_id = "wfzgvuscivyzwuoaumto"
+
+[functions.ocrspace-proxy]
+verify_jwt = false
