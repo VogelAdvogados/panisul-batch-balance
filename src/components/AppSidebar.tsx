@@ -1,31 +1,29 @@
 import {
   BarChart3,
-  Package2,
-  ShoppingCart,
-  Users,
-  TrendingUp,
-  DollarSign,
-  RefreshCw,
   ChefHat,
-  Utensils,
+  DollarSign,
+  FileText,
   Home,
-  Menu,
   Landmark,
-  FileText
+  Package2,
+  RefreshCw,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+  Utensils,
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
+  SidebarMenuButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar"
 
 const navigationItems = [
@@ -47,39 +45,39 @@ const financialItems = [
 ]
 
 export function AppSidebar() {
-  const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
   const location = useLocation()
   const currentPath = location.pathname
 
-  const isActive = (path: string) => currentPath === path
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"
+  const isActive = (path: string) => {
+    // Exact match for homepage, otherwise check for prefix
+    return path === "/" ? currentPath === "/" : currentPath.startsWith(path)
+  }
 
   return (
-    <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} print:hidden`} collapsible="icon">
-      <SidebarContent>
-        {/* Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <Package2 className="h-6 w-6 text-primary" />
-            {!isCollapsed && (
-              <span className="font-bold text-lg text-primary">Panisul</span>
-            )}
-          </div>
+    <Sidebar collapsible="icon" className="print:hidden">
+      <SidebarHeader>
+        <div className="flex items-center gap-2">
+          <Package2 className="h-6 w-6 text-primary" />
+          <span className="font-bold text-lg text-primary group-data-[collapsible=icon]:hidden">
+            Panisul
+          </span>
         </div>
-
-        {/* Main Navigation */}
+      </SidebarHeader>
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Operações</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink to={item.url} end className={getNavCls}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    isActive={isActive(item.url)}
+                  >
+                    <NavLink to={item.url}>
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -88,17 +86,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Financial */}
         <SidebarGroup>
           <SidebarGroupLabel>Financeiro</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {financialItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink to={item.url} end className={getNavCls}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    isActive={isActive(item.url)}
+                  >
+                    <NavLink to={item.url}>
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

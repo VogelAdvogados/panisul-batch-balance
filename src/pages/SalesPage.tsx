@@ -1,9 +1,10 @@
 import SalesTab from "@/components/SalesTab"
+import { useSEO } from "@/hooks/useSEO"
 
 export default function SalesPage() {
-  return (
-    <div className="container mx-auto py-6">
-      <SalesTab />
-    </div>
-  )
+  useSEO({
+    title: "Vendas | Gestão",
+    description: "Gerencie suas vendas e histórico de clientes.",
+  })
+  return <SalesTab />
 }

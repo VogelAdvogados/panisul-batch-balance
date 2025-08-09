@@ -919,6 +919,10 @@ export type RecipeWithIngredients = Tables<'recipes'> & {
   recipe_ingredients: RecipeIngredientDetails[];
 };
 
+export type SaleWithCustomer = Tables<'sales'> & {
+  customers: Pick<Tables<'customers'>, 'name'> | null;
+};
+
 export type SaleWithItems = Tables<'sales'> & {
   sale_items: (Tables<'sale_items'> & {
     recipes: Pick<Tables<'recipes'>, 'name'> | null;
@@ -963,6 +967,10 @@ export type FinancialReportData = {
 
 export type AccountPayableWithSupplier = Tables<'accounts_payable'> & {
   suppliers: Pick<Tables<'suppliers'>, 'name'> | null;
+};
+
+export type AccountReceivableWithCustomer = Tables<'accounts_receivable'> & {
+  customers: Pick<Tables<'customers'>, 'name'> | null;
 };
 
 export type TopProduct = {
