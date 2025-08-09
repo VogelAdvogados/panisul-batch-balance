@@ -1,73 +1,75 @@
-# Welcome to your Lovable project
+# Sistema de Gestão Panisul
 
-## Project info
+Este projeto é um sistema de gestão completo, desenvolvido para uma padaria ou negócio do ramo alimentício, com o objetivo de centralizar e otimizar as operações diárias.
 
-**URL**: https://lovable.dev/projects/be805e80-5a0c-45e1-970b-2a2a368646b5
+## Visão Geral
 
-## How can I edit this code?
+O sistema oferece uma interface moderna e responsiva para gerenciar as principais áreas do negócio, desde o controle de estoque de ingredientes até a gestão financeira e de clientes. A arquitetura foi refatorada para garantir performance e escalabilidade, utilizando uma stack moderna com React e Supabase.
 
-There are several ways of editing your application.
+## Funcionalidades Principais
 
-**Use Lovable**
+-   **Dashboard Interativo:** Visualização rápida dos principais indicadores do negócio, como vendas, contas a pagar/receber e produtos com baixo estoque. Inclui gráficos de vendas e rankings de "Top 5" produtos e clientes.
+-   **Gestão de Compras e Ingredientes:**
+    -   Registro de compras de insumos.
+    -   Importação de NFe (XML e PDF) para popular dados de compra automaticamente.
+    -   Cálculo automático de custo médio dos ingredientes.
+    -   Alerta de estoque baixo.
+-   **Receitas e Produção:**
+    -   Criação e gerenciamento de receitas.
+    -   Cálculo de custo total e por unidade para cada receita.
+    -   Registro de lotes de produção com baixa automática de ingredientes do estoque.
+    -   Avisos de disponibilidade de estoque durante o planejamento da produção.
+-   **Gestão de Clientes:**
+    -   Cadastro e busca de clientes.
+    -   Página de detalhes do cliente com histórico completo de compras e financeiro (contas a receber).
+-   **Controle Financeiro Completo:**
+    -   Gestão de contas a pagar e a receber.
+    -   Criação de múltiplas contas financeiras (Caixa, Banco).
+    -   Fluxo de pagamento de contas com baixa do saldo da conta selecionada.
+    -   Relatórios financeiros.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/be805e80-5a0c-45e1-970b-2a2a368646b5) and start prompting.
+## Stack de Tecnologia
 
-Changes made via Lovable will be committed automatically to this repo.
+-   **Frontend:** React, Vite, TypeScript
+-   **UI:** shadcn/ui, Tailwind CSS
+-   **Backend & Base de Dados:** Supabase (PostgreSQL)
+-   **Gerenciamento de Estado (Frontend):** TanStack Query (React Query)
 
-**Use your preferred IDE**
+## Instalação e Execução
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Para executar este projeto localmente, siga os passos abaixo.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Pré-requisitos
 
-Follow these steps:
+-   Node.js e npm (ou um gerenciador de pacotes compatível)
+-   Uma instância do Supabase com o schema de banco de dados correspondente (ver `supabase/migrations`).
+-   Um arquivo `.env` na raiz do projeto com as credenciais do Supabase:
+    ```
+    VITE_SUPABASE_URL=URL_DO_SEU_PROJETO_SUPABASE
+    VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+    ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Passos
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1.  **Clone o repositório:**
+    ```sh
+    git clone <URL_DO_REPOSITORIO>
+    cd <NOME_DO_PROJETO>
+    ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2.  **Instale as dependências:**
+    ```sh
+    npm install
+    ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+3.  **Execute o servidor de desenvolvimento:**
+    ```sh
+    npm run dev
+    ```
+    A aplicação estará disponível em `http://localhost:5173` (ou outra porta indicada no terminal).
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/be805e80-5a0c-45e1-970b-2a2a368646b5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+4.  **Para build de produção:**
+    ```sh
+    npm run build
+    ```
+    Os arquivos otimizados serão gerados no diretório `dist/`.
