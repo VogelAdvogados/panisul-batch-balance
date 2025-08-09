@@ -6,9 +6,10 @@ import {
   AlertTriangle
 } from "lucide-react"
 import { useDashboardStats } from "@/hooks/useDashboardStats"
-import { useSalesLast7Days } from "@/hooks/useSalesLast7Days"
+import { useSalesByPeriod, SalesPeriod } from "@/hooks/useSalesByPeriod"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Link } from "react-router-dom"
@@ -58,8 +59,10 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading, linkTo }: 
   return cardContent;
 }
 
-const SalesChart = () => {
-  const { data: chartData, isLoading } = useSalesLast7Days();
+import { useState } from "react"
+
+const SalesChart = ({ period }: { period: SalesPeriod }) => {
+  const { data: chartData, isLoading } = useSalesByPeriod(period);
 
   if (isLoading) {
     return <div className="h-[300px] w-full flex items-center justify-center"><Skeleton className="h-full w-full" /></div>;
@@ -109,6 +112,7 @@ const SalesChart = () => {
 
 export default function Dashboard() {
   const { data: stats, isLoading, isError, error } = useDashboardStats();
+  const [salesChartPeriod, setSalesChartPeriod] = useState<SalesPeriod>('7d');
 
   if (isError) {
     return <div className="p-6 text-red-500">Erro ao carregar dashboard: {error.message}</div>;
@@ -154,13 +158,22 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Vendas nos Últimos 7 Dias</CardTitle>
-          <CardDescription>
-            Visão geral do total de vendas diárias na última semana.
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <CardTitle>Vendas por Período</CardTitle>
+              <CardDescription>
+                Visão geral do total de vendas diárias.
+              </CardDescription>
+            </div>
+            <ToggleGroup type="single" value={salesChartPeriod} onValueChange={(value: SalesPeriod) => value && setSalesChartPeriod(value)} size="sm">
+              <ToggleGroupItem value="7d">7d</ToggleGroupItem>
+              <ToggleGroupItem value="30d">30d</ToggleGroupItem>
+              <ToggleGroupItem value="this_month">Mês</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </CardHeader>
         <CardContent>
-          <SalesChart />
+          <SalesChart period={salesChartPeriod} />
         </CardContent>
       </Card>
     </div>
