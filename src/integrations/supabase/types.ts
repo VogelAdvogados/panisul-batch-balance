@@ -941,3 +941,7 @@ export type SalesLast7Days = {
   day: string;
   total_sales: number;
 };
+
+export type ProductionWithRecipe = Tables<'productions'> & {
+  recipes: Pick<Tables<'recipes'>, 'name' | 'yield_unit'> | null;
+};
