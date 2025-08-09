@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Plus, Check, Calendar, DollarSign } from "lucide-react"
 import { format, parseISO, isBefore, isAfter, addDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { useSEO } from "@/hooks/useSEO"
 
 interface Supplier {
   id: string
@@ -40,6 +41,7 @@ interface AccountPayable {
 }
 
 export default function AccountsPayablePage() {
+  useSEO({ title: "Contas a Pagar | Financeiro", description: "Gerencie suas contas a pagar, pendentes e vencidas." });
   const { toast } = useToast()
   const [accounts, setAccounts] = useState<AccountPayable[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])

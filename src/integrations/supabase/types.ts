@@ -248,6 +248,125 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["account_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["account_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["account_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string
+          accounts_payable_id: string | null
+          accounts_receivable_id: string | null
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          occurred_at: string
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          purchase_id: string | null
+          sale_id: string | null
+          txn_type: string
+        }
+        Insert: {
+          account_id: string
+          accounts_payable_id?: string | null
+          accounts_receivable_id?: string | null
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          occurred_at?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          purchase_id?: string | null
+          sale_id?: string | null
+          txn_type: string
+        }
+        Update: {
+          account_id?: string
+          accounts_payable_id?: string | null
+          accounts_receivable_id?: string | null
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          occurred_at?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          purchase_id?: string | null
+          sale_id?: string | null
+          txn_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          from_account_id: string
+          id: string
+          to_account_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          from_account_id: string
+          id?: string
+          to_account_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          from_account_id?: string
+          id?: string
+          to_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transfers_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transfers_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredients: {
         Row: {
           cost_per_unit: number
@@ -643,10 +762,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recalc_ingredient_avg_cost: {
+        Args: { p_ingredient_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      account_type: "cash" | "checking"
+      payment_method: "cash" | "pix"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -773,6 +896,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_type: ["cash", "checking"],
+      payment_method: ["cash", "pix"],
+    },
   },
 } as const

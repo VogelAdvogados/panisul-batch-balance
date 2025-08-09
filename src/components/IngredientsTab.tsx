@@ -60,7 +60,7 @@ const IngredientsTab = () => {
         unit: formData.unit,
         current_stock: parseFloat(formData.current_stock),
         min_stock: parseFloat(formData.min_stock),
-        cost_per_unit: parseFloat(formData.cost_per_unit)
+        cost_per_unit: parseFloat(formData.cost_per_unit) || 0
       });
 
     if (error) {
@@ -181,8 +181,8 @@ const IngredientsTab = () => {
                     step="0.01"
                     value={formData.cost_per_unit}
                     onChange={(e) => setFormData({...formData, cost_per_unit: e.target.value})}
-                    required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Atualizado automaticamente por compras confirmadas (custo médio).</p>
                 </div>
               </div>
               <div className="flex gap-2">

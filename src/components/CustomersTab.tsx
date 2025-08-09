@@ -27,6 +27,7 @@ const CustomersTab = () => {
     phone: "",
     address: ""
   });
+  const [search, setSearch] = useState("");
   const { toast } = useToast();
 
   const fetchCustomers = async () => {
@@ -83,18 +84,31 @@ const CustomersTab = () => {
       fetchCustomers();
     }
   };
+  const filteredCustomers = customers.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.phone || '').toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between gap-3 md:items-center">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Users className="h-6 w-6" />
           Clientes
+          <span className="text-sm font-normal text-muted-foreground">({filteredCustomers.length})</span>
         </h2>
-        <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Cliente
-        </Button>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Input
+            placeholder="Buscar cliente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <Button onClick={() => setShowForm(!showForm)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {showForm && (
@@ -168,7 +182,7 @@ const CustomersTab = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.map((customer) => (
+              {filteredCustomers.map((customer) => (
                 <TableRow key={customer.id}>
                   <TableCell className="font-medium">{customer.name}</TableCell>
                   <TableCell>{customer.email || "-"}</TableCell>

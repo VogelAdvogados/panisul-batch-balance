@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Plus, Check, Calendar, DollarSign } from "lucide-react"
 import { format, parseISO, isBefore, addDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { useSEO } from "@/hooks/useSEO"
 
 interface Customer {
   id: string
@@ -40,6 +41,7 @@ interface AccountReceivable {
 }
 
 export default function AccountsReceivablePage() {
+  useSEO({ title: "Contas a Receber | Financeiro", description: "Gerencie suas contas a receber, vencidos e recebidos." });
   const { toast } = useToast()
   const [accounts, setAccounts] = useState<AccountReceivable[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])

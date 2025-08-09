@@ -22,6 +22,7 @@ interface Ingredient {
   id: string;
   name: string;
   unit: string;
+  cost_per_unit: number;
 }
 
 interface RecipeIngredient {
@@ -29,6 +30,12 @@ interface RecipeIngredient {
   quantity: number;
   ingredient_name?: string;
   ingredient_unit?: string;
+}
+
+interface RecipeItemRow {
+  recipe_id: string;
+  ingredient_id: string;
+  quantity: number;
 }
 
 const RecipesTab = () => {
@@ -42,7 +49,18 @@ const RecipesTab = () => {
     yield_unit: ""
   });
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
+  const [recipeItems, setRecipeItems] = useState<RecipeItemRow[]>([]);
   const { toast } = useToast();
+
+  const getRecipeCost = (recipeId: string) => {
+    const items = recipeItems.filter((it) => it.recipe_id === recipeId);
+    return items.reduce((sum, it) => {
+      const ing = ingredients.find((i) => i.id === it.ingredient_id);
+      const qty = Number(it.quantity) || 0;
+      const cost = Number(ing?.cost_per_unit) || 0;
+      return sum + qty * cost;
+    }, 0);
+  };
 
   const fetchRecipes = async () => {
     const { data, error } = await supabase
@@ -72,9 +90,17 @@ const RecipesTab = () => {
     }
   };
 
+  const fetchRecipeItems = async () => {
+    const { data } = await supabase
+      .from("recipe_ingredients")
+      .select("recipe_id, ingredient_id, quantity");
+    setRecipeItems(data || []);
+  };
+
   useEffect(() => {
     fetchRecipes();
     fetchIngredients();
+    fetchRecipeItems();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -285,6 +311,8 @@ const RecipesTab = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Rendimento</TableHead>
+                <TableHead>Custo (R$)</TableHead>
+                <TableHead>Custo/Unidade (R$)</TableHead>
                 <TableHead>Criada em</TableHead>
               </TableRow>
             </TableHeader>
@@ -294,6 +322,8 @@ const RecipesTab = () => {
                   <TableCell className="font-medium">{recipe.name}</TableCell>
                   <TableCell>{recipe.description}</TableCell>
                   <TableCell>{recipe.yield_quantity} {recipe.yield_unit}</TableCell>
+                  <TableCell>{`R$ ${getRecipeCost(recipe.id).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}</TableCell>
+                  <TableCell>{`R$ ${(getRecipeCost(recipe.id) / (Number(recipe.yield_quantity) || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}</TableCell>
                   <TableCell>{new Date(recipe.created_at).toLocaleDateString('pt-BR')}</TableCell>
                 </TableRow>
               ))}
