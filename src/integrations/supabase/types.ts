@@ -902,3 +902,11 @@ export const Constants = {
     },
   },
 } as const
+
+// Custom application types
+export type Supplier = Tables<'suppliers'>;
+export type Ingredient = Tables<'ingredients'>;
+export type PurchaseItem = Tables<'purchase_items'>;
+export type PurchaseWithSupplier = Tables<'purchases'> & {
+  suppliers: Supplier | null;
+};
