@@ -910,3 +910,22 @@ export type PurchaseItem = Tables<'purchase_items'>;
 export type PurchaseWithSupplier = Tables<'purchases'> & {
   suppliers: Supplier | null;
 };
+
+export type RecipeIngredientDetails = Tables<'recipe_ingredients'> & {
+  ingredients: Pick<Tables<'ingredients'>, 'id' | 'name' | 'unit' | 'cost_per_unit'> | null;
+};
+
+export type RecipeWithIngredients = Tables<'recipes'> & {
+  recipe_ingredients: RecipeIngredientDetails[];
+};
+
+export type SaleWithItems = Tables<'sales'> & {
+  sale_items: (Tables<'sale_items'> & {
+    recipes: Pick<Tables<'recipes'>, 'name'> | null;
+  })[];
+};
+
+export type CustomerDetails = Tables<'customers'> & {
+  sales: SaleWithItems[];
+  accounts_receivable: Tables<'accounts_receivable'>[];
+};
