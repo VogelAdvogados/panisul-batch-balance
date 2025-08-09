@@ -17,6 +17,7 @@ import ExchangesPage from "./pages/ExchangesPage";
 import AccountsPayablePage from "./pages/AccountsPayablePage";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage";
 import FinancialAccountsPage from "./pages/FinancialAccountsPage";
+import ReportsPage from "./pages/ReportsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +32,7 @@ const App = () => (
           <div className="min-h-screen flex w-full">
             <AppSidebar />
             <div className="flex-1">
-              <header className="h-14 border-b flex items-center px-4 lg:px-6">
+              <header id="app-header" className="h-14 border-b flex items-center px-4 lg:px-6 print:hidden">
                 <SidebarTrigger />
                 <div className="ml-auto">
                   <h2 className="text-lg font-semibold">Sistema Panisul</h2>
@@ -51,6 +52,7 @@ const App = () => (
                   <Route path="/contas-pagar" element={<AccountsPayablePage />} />
                   <Route path="/contas-receber" element={<AccountsReceivablePage />} />
                   <Route path="/financeiro/contas" element={<FinancialAccountsPage />} />
+                  <Route path="/relatorios" element={<ReportsPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>

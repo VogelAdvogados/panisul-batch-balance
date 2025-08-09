@@ -10,7 +10,8 @@ import {
   Utensils,
   Home,
   Menu,
-  Landmark
+  Landmark,
+  FileText
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -42,6 +43,7 @@ const financialItems = [
   { title: "Contas a Pagar", url: "/contas-pagar", icon: DollarSign },
   { title: "Contas a Receber", url: "/contas-receber", icon: BarChart3 },
   { title: "Contas Financeiras", url: "/financeiro/contas", icon: Landmark },
+  { title: "Relatórios", url: "/relatorios", icon: FileText },
 ]
 
 export function AppSidebar() {
@@ -55,7 +57,7 @@ export function AppSidebar() {
     isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"
 
   return (
-    <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
+    <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} print:hidden`} collapsible="icon">
       <SidebarContent>
         {/* Header */}
         <div className="p-4 border-b">

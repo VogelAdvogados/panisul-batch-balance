@@ -953,6 +953,14 @@ export type FinancialAccountWithBalance = {
   balance: number;
 };
 
+export type PayableReportItem = Tables<'accounts_payable'> & { supplier_name: string };
+export type ReceivableReportItem = Tables<'accounts_receivable'> & { customer_name: string };
+
+export type FinancialReportData = {
+  paidPayables: PayableReportItem[];
+  receivedReceivables: ReceivableReportItem[];
+};
+
 export type AccountPayableWithSupplier = Tables<'accounts_payable'> & {
   suppliers: Pick<Tables<'suppliers'>, 'name'> | null;
 };
