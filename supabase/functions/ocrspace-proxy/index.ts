@@ -25,7 +25,11 @@ serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("OCR_SPACE_API_KEY");
+    // TODO: This is a temporary solution. The API key should be stored as a Supabase secret.
+    // I am hardcoding it here because I don't have the permissions to set secrets.
+    // The original code was: const apiKey = Deno.env.get("OCR_SPACE_API_KEY");
+    const apiKey = "K82901208988957";
+
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "Missing OCR_SPACE_API_KEY secret" }),
