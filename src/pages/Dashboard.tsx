@@ -11,8 +11,31 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { Link } from "react-router-dom"
 
-const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string, icon: React.ElementType, description?: string, isLoading: boolean }) => {
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  description?: string;
+  isLoading: boolean;
+  linkTo?: string;
+}
+
+const StatCard = ({ title, value, icon: Icon, description, isLoading, linkTo }: StatCardProps) => {
+  const cardContent = (
+    <Card className={linkTo ? "hover:border-primary/80 hover:shadow-md transition-all" : ""}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </CardContent>
+    </Card>
+  );
+
   if (isLoading) {
     return (
       <Card>
@@ -27,18 +50,12 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
       </Card>
     )
   }
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
-      </CardContent>
-    </Card>
-  )
+
+  if (linkTo) {
+    return <Link to={linkTo}>{cardContent}</Link>;
+  }
+
+  return cardContent;
 }
 
 const SalesChart = () => {
@@ -109,18 +126,21 @@ export default function Dashboard() {
           value={stats?.salesLast30Days.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || ''}
           icon={TrendingUp}
           isLoading={isLoading}
+          linkTo="/vendas"
         />
         <StatCard
           title="Contas a Receber (Pendente)"
           value={stats?.pendingReceivables.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || ''}
           icon={Wallet}
           isLoading={isLoading}
+          linkTo="/contas-receber"
         />
         <StatCard
           title="Contas a Pagar (Pendente)"
           value={stats?.pendingPayables.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || ''}
           icon={Receipt}
           isLoading={isLoading}
+          linkTo="/contas-pagar"
         />
         <StatCard
           title="Ingredientes com Estoque Baixo"
@@ -128,6 +148,7 @@ export default function Dashboard() {
           icon={AlertTriangle}
           description={`${stats?.lowStockCount || 0} iten(s) precisam de reposição`}
           isLoading={isLoading}
+          linkTo="/ingredientes"
         />
       </div>
 
