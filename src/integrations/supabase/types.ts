@@ -929,3 +929,15 @@ export type CustomerDetails = Tables<'customers'> & {
   sales: SaleWithItems[];
   accounts_receivable: Tables<'accounts_receivable'>[];
 };
+
+export type DashboardStats = {
+  salesLast30Days: number;
+  pendingReceivables: number;
+  pendingPayables: number;
+  lowStockCount: number;
+};
+
+export type SalesLast7Days = {
+  day: string;
+  total_sales: number;
+};
