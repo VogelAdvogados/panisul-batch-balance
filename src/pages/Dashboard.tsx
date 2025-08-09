@@ -3,11 +3,16 @@ import {
   TrendingUp, 
   Wallet,
   Receipt,
-  AlertTriangle
+  AlertTriangle,
+  Trophy,
+  Crown
 } from "lucide-react"
 import { useDashboardStats } from "@/hooks/useDashboardStats"
 import { useSalesByPeriod, SalesPeriod } from "@/hooks/useSalesByPeriod"
+import { useTopProducts } from "@/hooks/useTopProducts"
+import { useTopCustomers } from "@/hooks/useTopCustomers"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TopItemsList } from "@/components/dashboard/TopItemsList"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { format } from "date-fns"
@@ -113,6 +118,8 @@ const SalesChart = ({ period }: { period: SalesPeriod }) => {
 export default function Dashboard() {
   const { data: stats, isLoading, isError, error } = useDashboardStats();
   const [salesChartPeriod, setSalesChartPeriod] = useState<SalesPeriod>('7d');
+  const { data: topProducts, isLoading: isLoadingTopProducts } = useTopProducts(5);
+  const { data: topCustomers, isLoading: isLoadingTopCustomers } = useTopCustomers(5);
 
   if (isError) {
     return <div className="p-6 text-red-500">Erro ao carregar dashboard: {error.message}</div>;
@@ -176,6 +183,43 @@ export default function Dashboard() {
           <SalesChart period={salesChartPeriod} />
         </CardContent>
       </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5 text-amber-500" />Top 5 Produtos Mais Vendidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TopItemsList
+              isLoading={isLoadingTopProducts}
+              items={topProducts?.map(p => ({
+                id: p.product_id,
+                name: p.product_name,
+                value: p.total_quantity_sold,
+                linkTo: `/receitas` // Placeholder link
+              })) || []}
+              valueFormatter={(val) => `${val} un.`}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Crown className="h-5 w-5 text-blue-500" />Top 5 Clientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TopItemsList
+              isLoading={isLoadingTopCustomers}
+              items={topCustomers?.map(c => ({
+                id: c.customer_id,
+                name: c.customer_name,
+                value: c.total_spent,
+                linkTo: `/clientes/${c.customer_id}`
+              })) || []}
+              valueFormatter={(val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

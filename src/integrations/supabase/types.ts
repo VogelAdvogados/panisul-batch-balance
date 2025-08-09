@@ -964,3 +964,15 @@ export type FinancialReportData = {
 export type AccountPayableWithSupplier = Tables<'accounts_payable'> & {
   suppliers: Pick<Tables<'suppliers'>, 'name'> | null;
 };
+
+export type TopProduct = {
+  product_id: string;
+  product_name: string;
+  total_quantity_sold: number;
+};
+
+export type TopCustomer = {
+  customer_id: string;
+  customer_name: string;
+  total_spent: number;
+};
