@@ -9,7 +9,8 @@ import {
   ChefHat,
   Utensils,
   Home,
-  Menu
+  Menu,
+  Landmark
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -40,6 +41,7 @@ const navigationItems = [
 const financialItems = [
   { title: "Contas a Pagar", url: "/contas-pagar", icon: DollarSign },
   { title: "Contas a Receber", url: "/contas-receber", icon: BarChart3 },
+  { title: "Contas Financeiras", url: "/financeiro/contas", icon: Landmark },
 ]
 
 export function AppSidebar() {

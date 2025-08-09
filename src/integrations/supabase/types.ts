@@ -945,3 +945,14 @@ export type SalesLast7Days = {
 export type ProductionWithRecipe = Tables<'productions'> & {
   recipes: Pick<Tables<'recipes'>, 'name' | 'yield_unit'> | null;
 };
+
+export type FinancialAccountWithBalance = {
+  id: string;
+  name: string;
+  type: "cash" | "checking";
+  balance: number;
+};
+
+export type AccountPayableWithSupplier = Tables<'accounts_payable'> & {
+  suppliers: Pick<Tables<'suppliers'>, 'name'> | null;
+};
