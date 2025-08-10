@@ -7,7 +7,7 @@ interface PayBillParams {
 }
 
 const payBill = async ({ payable_id, account_id }: PayBillParams) => {
-  const { error } = await supabase.rpc('pay_bill', {
+  const { error } = await (supabase.rpc as any)('pay_bill', {
     p_payable_id: payable_id,
     p_account_id: account_id,
   });

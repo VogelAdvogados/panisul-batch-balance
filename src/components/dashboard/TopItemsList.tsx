@@ -10,12 +10,11 @@ interface Item {
 
 interface TopItemsListProps {
   items: Item[];
-  title: string;
   isLoading: boolean;
   valueFormatter?: (value: number) => string;
 }
 
-export const TopItemsList = ({ items, title, isLoading, valueFormatter }: TopItemsListProps) => {
+export const TopItemsList = ({ items, isLoading, valueFormatter }: TopItemsListProps) => {
   const renderContent = () => {
     if (isLoading) {
       return Array.from({ length: 5 }).map((_, i) => (

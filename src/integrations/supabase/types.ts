@@ -911,7 +911,7 @@ export type PurchaseWithSupplier = Tables<'purchases'> & {
   suppliers: Supplier | null;
 };
 
-export type RecipeIngredientDetails = Tables<'recipe_ingredients'> & {
+export type RecipeIngredientDetails = Pick<Tables<'recipe_ingredients'>, 'quantity'> & {
   ingredients: Pick<Tables<'ingredients'>, 'id' | 'name' | 'unit' | 'cost_per_unit'> | null;
 };
 
