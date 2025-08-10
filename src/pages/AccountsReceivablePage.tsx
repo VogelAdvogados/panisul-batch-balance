@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Check, Calendar, DollarSign, Loader2 } from "lucide-react"
+import { Plus, Check, Calendar, DollarSign, Loader2, History } from "lucide-react"
 import { format, parseISO, isBefore, startOfToday } from "date-fns"
 import { useSEO } from "@/hooks/useSEO"
 import {
@@ -49,6 +49,7 @@ import {
   AccountReceivableWithCustomer,
   TablesInsert,
 } from "@/integrations/supabase/types"
+import { useAccountsReceivableLogs } from "@/hooks/useAccountsReceivableLogs"
 
 export default function AccountsReceivablePage() {
   useSEO({
@@ -58,6 +59,9 @@ export default function AccountsReceivablePage() {
   const { toast } = useToast()
   const [showNewAccount, setShowNewAccount] = useState(false)
   const [filter, setFilter] = useState<ReceivableStatusFilter>("pending")
+
+  const [historyAccountId, setHistoryAccountId] = useState<string | null>(null)
+  const { data: historyLogs, isLoading: isLoadingHistory } = useAccountsReceivableLogs(historyAccountId ?? undefined)
 
   const {
     data: accounts,
@@ -293,27 +297,40 @@ export default function AccountsReceivablePage() {
                         </TableCell>
                         <TableCell>{getStatusBadge(account)}</TableCell>
                         <TableCell>
-                          {account.status === "pending" && (
+                          <div className="flex flex-col gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => markAsReceived(account.id)}
-                              disabled={updateAccountMutation.isPending && updateAccountMutation.variables?.id === account.id}
+                              onClick={() => setHistoryAccountId(account.id)}
                             >
-                              {updateAccountMutation.isPending && updateAccountMutation.variables?.id === account.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-                              Receber
+                              <History className="h-4 w-4 mr-2" />
+                              Histórico
                             </Button>
-                          )}
-                          {account.status === "received" &&
-                            account.received_date && (
-                              <span className="text-sm text-muted-foreground">
-                                Recebido em{" "}
-                                {format(
-                                  parseISO(account.received_date),
-                                  "dd/MM/yyyy",
+                            {account.status === "pending" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => markAsReceived(account.id)}
+                                disabled={
+                                  updateAccountMutation.isPending &&
+                                  updateAccountMutation.variables?.id === account.id
+                                }
+                              >
+                                {updateAccountMutation.isPending &&
+                                updateAccountMutation.variables?.id === account.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Check className="h-4 w-4 mr-2" />
                                 )}
+                                Receber
+                              </Button>
+                            )}
+                            {account.status === "received" && account.received_date && (
+                              <span className="text-sm text-muted-foreground">
+                                Recebido em {format(parseISO(account.received_date), "dd/MM/yyyy")}
                               </span>
                             )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -323,6 +340,38 @@ export default function AccountsReceivablePage() {
             </div>
           </CardContent>
         </Card>
+
+        <Dialog open={!!historyAccountId} onOpenChange={(open) => !open && setHistoryAccountId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Histórico da Conta</DialogTitle>
+            </DialogHeader>
+            {isLoadingHistory ? (
+              <p>Carregando...</p>
+            ) : historyLogs && historyLogs.length > 0 ? (
+              <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+                {historyLogs.map((log) => (
+                  <li key={log.changed_at} className="text-sm">
+                    {format(parseISO(log.changed_at), 'dd/MM/yyyy HH:mm')} –
+                    {log.old_status !== log.new_status && (
+                      <span>
+                        Status: {log.old_status || '-'} → {log.new_status || '-'}
+                        {log.old_method !== log.new_method ? '; ' : ''}
+                      </span>
+                    )}
+                    {log.old_method !== log.new_method && (
+                      <span>
+                        Método: {log.old_method || '-'} → {log.new_method || '-'}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum histórico.</p>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={showNewAccount} onOpenChange={setShowNewAccount}>
           <DialogContent>
