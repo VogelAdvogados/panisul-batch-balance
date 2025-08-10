@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { TablesInsert } from '@/integrations/supabase/types';
+import { TablesInsert, Database } from '@/integrations/supabase/types';
 
-type NewAccountReceivable = TablesInsert<'accounts_receivable'>;
+type NewAccountReceivable = TablesInsert<'accounts_receivable'> & {
+  expected_payment_method?: Database['public']['Enums']['payment_method'] | null;
+};
 
 const createAccountReceivable = async (entry: NewAccountReceivable) => {
   const { data, error } = await supabase
