@@ -36,6 +36,7 @@ import { useCreatePurchase } from "@/hooks/useCreatePurchase"
 import { useCreateSupplier } from "@/hooks/useCreateSupplier"
 import { useUpdatePurchaseStatus } from "@/hooks/useUpdatePurchaseStatus"
 import { TablesInsert } from "@/integrations/supabase/types"
+import { Supplier } from "@/types"
 import { useQueryClient } from "@tanstack/react-query"
 import { PurchaseForm } from "@/components/purchases/PurchaseForm"
 import { SupplierForm } from "@/components/purchases/SupplierForm"
@@ -70,8 +71,8 @@ export default function PurchasesPage() {
     queryClient.invalidateQueries({ queryKey: ["suppliers"] })
   }
 
-  const handleSupplierSubmit = (supplierData: TablesInsert<"suppliers">) => {
-    createSupplierMutation.mutate(supplierData, {
+  const handleSupplierSubmit = (supplierData: Omit<Supplier, 'id'>) => {
+    createSupplierMutation.mutate(supplierData as TablesInsert<'suppliers'>, {
       onSuccess: () => {
         toast({
           title: "Sucesso",
