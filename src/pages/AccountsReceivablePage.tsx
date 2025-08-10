@@ -30,10 +30,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Check, Calendar, DollarSign, Loader2 } from "lucide-react"
+import { Plus, Check, Calendar, DollarSign, Loader2, Clock } from "lucide-react"
 import { format, parseISO, isBefore, startOfToday } from "date-fns"
 import { useSEO } from "@/hooks/useSEO"
 import {
@@ -43,12 +45,14 @@ import {
 import { useCustomers } from "@/hooks/useCustomers"
 import { useCreateAccountReceivable } from "@/hooks/useCreateAccountReceivable"
 import { useUpdateAccountReceivable } from "@/hooks/useUpdateAccountReceivable"
+import { useAccountsReceivableLogs } from "@/hooks/useAccountsReceivableLogs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/ui/PageHeader"
 import {
   AccountReceivableWithCustomer,
   TablesInsert,
 } from "@/integrations/supabase/types"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function AccountsReceivablePage() {
   useSEO({
@@ -79,6 +83,11 @@ export default function AccountsReceivablePage() {
     sale_id: null,
     received_date: null,
   })
+
+  const [renegotiating, setRenegotiating] = useState<AccountReceivableWithCustomer | null>(null)
+  const [renegotiateDate, setRenegotiateDate] = useState("")
+  const [renegotiateNotes, setRenegotiateNotes] = useState("")
+  const [logsAccountId, setLogsAccountId] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,8 +124,10 @@ export default function AccountsReceivablePage() {
     updateAccountMutation.mutate(
       {
         id: accountId,
-        status: "received",
-        received_date: new Date().toISOString(),
+        updates: {
+          status: "received",
+          received_date: new Date().toISOString(),
+        },
       },
       {
         onSuccess: () => {
@@ -136,6 +147,39 @@ export default function AccountsReceivablePage() {
     )
   }
 
+  const openRenegotiate = (account: AccountReceivableWithCustomer) => {
+    setRenegotiating(account)
+    setRenegotiateDate(account.due_date)
+    setRenegotiateNotes("")
+  }
+
+  const handleRenegotiate = () => {
+    if (!renegotiating) return
+    updateAccountMutation.mutate(
+      {
+        id: renegotiating.id,
+        updates: { due_date: renegotiateDate },
+        notes: renegotiateNotes,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Sucesso",
+            description: "Vencimento renegociado",
+          })
+          setRenegotiating(null)
+        },
+        onError: (error) => {
+          toast({
+            title: "Erro",
+            description: `Erro ao renegociar: ${error.message}`,
+            variant: "destructive",
+          })
+        },
+      },
+    )
+  }
+
   const getStatusBadge = (account: AccountReceivableWithCustomer) => {
     if (account.status === "received") {
       return <Badge className="bg-green-600 hover:bg-green-700">Recebido</Badge>
@@ -146,6 +190,33 @@ export default function AccountsReceivablePage() {
       return <Badge variant="destructive">Vencido</Badge>
     }
     return <Badge variant="secondary">Pendente</Badge>
+  }
+
+  const LogsList = ({ accountId }: { accountId: string }) => {
+    const { data: logs, isLoading } = useAccountsReceivableLogs(accountId)
+
+    if (isLoading) return <p>Carregando...</p>
+    if (!logs || logs.length === 0)
+      return (
+        <p className="text-sm text-muted-foreground">Nenhuma renegociação registrada.</p>
+      )
+
+    return (
+      <ul className="space-y-4 max-h-60 overflow-y-auto">
+        {logs.map((log) => (
+          <li key={log.id} className="text-sm space-y-1">
+            <div className="font-medium">
+              {format(parseISO(log.changed_at), 'dd/MM/yyyy')}
+            </div>
+            <div>
+              {format(parseISO(log.old_due_date), 'dd/MM/yyyy')} →{' '}
+              {format(parseISO(log.new_due_date), 'dd/MM/yyyy')}
+            </div>
+            {log.notes && <div className="text-muted-foreground">{log.notes}</div>}
+          </li>
+        ))}
+      </ul>
+    )
   }
 
   const totalPending =
@@ -293,17 +364,40 @@ export default function AccountsReceivablePage() {
                         </TableCell>
                         <TableCell>{getStatusBadge(account)}</TableCell>
                         <TableCell>
-                          {account.status === "pending" && (
+                          <div className="flex gap-2">
+                            {account.status === "pending" && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => markAsReceived(account.id)}
+                                  disabled={updateAccountMutation.isPending && updateAccountMutation.variables?.id === account.id}
+                                >
+                                  {updateAccountMutation.isPending && updateAccountMutation.variables?.id === account.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Check className="h-4 w-4 mr-2" />
+                                  )}
+                                  Receber
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openRenegotiate(account)}
+                                >
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  Renegociar
+                                </Button>
+                              </>
+                            )}
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              onClick={() => markAsReceived(account.id)}
-                              disabled={updateAccountMutation.isPending && updateAccountMutation.variables?.id === account.id}
+                              onClick={() => setLogsAccountId(account.id)}
                             >
-                              {updateAccountMutation.isPending && updateAccountMutation.variables?.id === account.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-                              Receber
+                              <Clock className="h-4 w-4" />
                             </Button>
-                          )}
+                          </div>
                           {account.status === "received" &&
                             account.received_date && (
                               <span className="text-sm text-muted-foreground">
@@ -415,6 +509,53 @@ export default function AccountsReceivablePage() {
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!renegotiating} onOpenChange={(open) => !open && setRenegotiating(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Renegociar Vencimento</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Nova Data</Label>
+                <Input
+                  type="date"
+                  value={renegotiateDate}
+                  onChange={(e) => setRenegotiateDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Motivo</Label>
+                <Textarea
+                  value={renegotiateNotes}
+                  onChange={(e) => setRenegotiateNotes(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button onClick={handleRenegotiate} disabled={updateAccountMutation.isPending}>
+                {updateAccountMutation.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                Confirmar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!logsAccountId} onOpenChange={(open) => !open && setLogsAccountId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Histórico de Renegociações</DialogTitle>
+            </DialogHeader>
+            {logsAccountId && <LogsList accountId={logsAccountId} />}
           </DialogContent>
         </Dialog>
       </div>

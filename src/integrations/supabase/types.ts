@@ -122,6 +122,51 @@ export type Database = {
           },
         ]
       }
+      accounts_receivable_logs: {
+        Row: {
+          id: string
+          account_id: string
+          changed_at: string
+          old_due_date: string | null
+          new_due_date: string | null
+          notes: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          changed_at?: string
+          old_due_date?: string | null
+          new_due_date?: string | null
+          notes?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          changed_at?: string
+          old_due_date?: string | null
+          new_due_date?: string | null
+          notes?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_receivable_logs_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_receivable"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_receivable_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       customers: {
         Row: {
           address: string | null

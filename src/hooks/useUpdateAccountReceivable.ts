@@ -6,9 +6,39 @@ interface UpdateParams {
   id: string;
   customerId?: string;
   updates: TablesUpdate<'accounts_receivable'>;
+  notes?: string;
+  userId?: string;
 }
 
-const updateAccountReceivable = async ({ id, updates }: UpdateParams) => {
+const updateAccountReceivable = async ({ id, updates, notes, userId }: UpdateParams) => {
+  // Fetch current due date before updating
+  const { data: current, error: fetchError } = await supabase
+    .from('accounts_receivable')
+    .select('due_date')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    throw new Error(fetchError.message);
+  }
+
+  // Insert log if due_date is being changed
+  if (updates.due_date && current?.due_date) {
+    const { error: logError } = await supabase
+      .from('accounts_receivable_logs')
+      .insert({
+        account_id: id,
+        old_due_date: current.due_date,
+        new_due_date: updates.due_date,
+        notes: notes || null,
+        user_id: userId || null,
+      });
+
+    if (logError) {
+      throw new Error(logError.message);
+    }
+  }
+
   const { data, error } = await supabase
     .from('accounts_receivable')
     .update(updates)
