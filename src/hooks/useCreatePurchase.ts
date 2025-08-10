@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { TablesInsert } from '@/integrations/supabase/types';
+import { TablesInsert, Tables, PurchaseWithSupplier } from '@/integrations/supabase/types';
 
 // Use TablesInsert for type safety from auto-generated types
 type NewPurchase = TablesInsert<'purchases'>;
@@ -53,13 +53,33 @@ const createPurchase = async ({ purchaseData, itemsData }: CreatePurchaseParams)
 export const useCreatePurchase = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Tables<'purchases'>, Error, CreatePurchaseParams, { previousPurchases: PurchaseWithSupplier[] | undefined }>({
     mutationFn: createPurchase,
-    onSuccess: () => {
-      // When the mutation is successful, invalidate the 'purchases' query cache.
-      // This will trigger a refetch of the purchases list and update the UI.
+    onMutate: async ({ purchaseData }) => {
+      await queryClient.cancelQueries({ queryKey: ['purchases'] });
+      const previousPurchases = queryClient.getQueryData<PurchaseWithSupplier[]>(['purchases']);
+
+      const optimisticPurchase: PurchaseWithSupplier = {
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        suppliers: null,
+        ...purchaseData,
+      } as PurchaseWithSupplier;
+
+      queryClient.setQueryData<PurchaseWithSupplier[]>(['purchases'], old =>
+        old ? [optimisticPurchase, ...old] : [optimisticPurchase]
+      );
+
+      return { previousPurchases };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousPurchases) {
+        queryClient.setQueryData(['purchases'], context.previousPurchases);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
     },
-    // onError can be handled here if needed, e.g., for logging or showing a generic error message.
   });
 };
