@@ -31,6 +31,7 @@ import { useSales } from "@/hooks/useSales"
 import { useCustomers } from "@/hooks/useCustomers"
 import { useRecipes } from "@/hooks/useRecipes"
 import { useCreateSale } from "@/hooks/useCreateSale"
+import { useCreateAccountReceivable } from "@/hooks/useCreateAccountReceivable"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { Tables, TablesInsert, Database } from "@/integrations/supabase/types"
@@ -63,6 +64,8 @@ const SalesTab = () => {
   const { data: customers, isLoading: isLoadingCustomers } = useCustomers()
   const { data: recipes, isLoading: isLoadingRecipes } = useRecipes()
   const createSaleMutation = useCreateSale()
+  const createAccountReceivableMutation = useCreateAccountReceivable()
+  const [paymentMethod, setPaymentMethod] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,7 +86,30 @@ const SalesTab = () => {
         financialData: formData.status === 'pending' ? financeData : undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (sale) => {
+          if (paymentMethod) {
+            createAccountReceivableMutation.mutate(
+              {
+                customer_id: formData.customer_id,
+                description: `Venda ${sale.id}`,
+                amount: totalSale,
+                due_date: formData.sale_date,
+                sale_id: sale.id,
+                received_date: null,
+                status: "pending",
+                expected_payment_method: paymentMethod,
+              },
+              {
+                onError: (error) => {
+                  toast({
+                    title: "Erro",
+                    description: `Erro ao criar conta a receber: ${error.message}`,
+                    variant: "destructive",
+                  })
+                },
+              },
+            )
+          }
           toast({
             title: "Sucesso",
             description: "Venda registrada! Estoque atualizado.",
@@ -94,6 +120,7 @@ const SalesTab = () => {
             status: "completed",
             notes: "",
           })
+          setPaymentMethod("")
           setSaleItems([])
           setFinanceData({
             due_date: new Date().toISOString().split("T")[0],
@@ -178,7 +205,7 @@ const SalesTab = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="customer_id">Cliente (Opcional)</Label>
                     <Select
@@ -226,6 +253,23 @@ const SalesTab = () => {
                         <SelectItem value="completed">Concluída</SelectItem>
                         <SelectItem value="pending">Pendente</SelectItem>
                         <SelectItem value="canceled">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_method">Forma de Pagamento</Label>
+                    <Select
+                      value={paymentMethod}
+                      onValueChange={(value) => setPaymentMethod(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pix">Pix</SelectItem>
+                        <SelectItem value="cash">Dinheiro</SelectItem>
+                        <SelectItem value="credit">Cartão de Crédito</SelectItem>
+                        <SelectItem value="debit">Cartão de Débito</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

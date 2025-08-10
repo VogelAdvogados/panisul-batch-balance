@@ -82,6 +82,7 @@ export default function AccountsReceivablePage() {
     due_date: new Date().toISOString().split("T")[0],
     sale_id: null,
     received_date: null,
+    expected_payment_method: "",
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,6 +102,7 @@ export default function AccountsReceivablePage() {
             due_date: new Date().toISOString().split("T")[0],
             sale_id: null,
             received_date: null,
+            expected_payment_method: "",
           })
           setShowNewAccount(false)
         },
@@ -116,11 +118,19 @@ export default function AccountsReceivablePage() {
   }
 
   const markAsReceived = (accountId: string) => {
+    const method = window.prompt(
+      "Informe a forma de pagamento (ex: pix, dinheiro)",
+      "",
+    )
+    if (!method) return
     updateAccountMutation.mutate(
       {
         id: accountId,
-        status: "received",
-        received_date: new Date().toISOString(),
+        updates: {
+          status: "received",
+          received_date: new Date().toISOString(),
+          actual_payment_method: method,
+        },
       },
       {
         onSuccess: () => {
@@ -418,7 +428,7 @@ export default function AccountsReceivablePage() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="amount">Valor *</Label>
                   <Input
@@ -447,6 +457,29 @@ export default function AccountsReceivablePage() {
                     }
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="expected_payment_method">Forma de Pagamento</Label>
+                  <Select
+                    value={formData.expected_payment_method || ""}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        expected_payment_method: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">Pix</SelectItem>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="credit">Cartão de Crédito</SelectItem>
+                      <SelectItem value="debit">Cartão de Débito</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

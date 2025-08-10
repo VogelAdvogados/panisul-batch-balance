@@ -75,6 +75,8 @@ export type Database = {
           customer_id: string | null
           description: string
           due_date: string
+          expected_payment_method: string | null
+          actual_payment_method: string | null
           id: string
           received_date: string | null
           sale_id: string | null
@@ -87,6 +89,8 @@ export type Database = {
           customer_id?: string | null
           description: string
           due_date: string
+          expected_payment_method?: string | null
+          actual_payment_method?: string | null
           id?: string
           received_date?: string | null
           sale_id?: string | null
@@ -99,6 +103,8 @@ export type Database = {
           customer_id?: string | null
           description?: string
           due_date?: string
+          expected_payment_method?: string | null
+          actual_payment_method?: string | null
           id?: string
           received_date?: string | null
           sale_id?: string | null
