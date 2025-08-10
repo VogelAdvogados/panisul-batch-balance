@@ -5,10 +5,21 @@ import { TablesUpdate } from '@/integrations/supabase/types';
 interface UpdateParams {
   id: string;
   customerId?: string;
-  updates: TablesUpdate<'accounts_receivable'>;
+  userId?: string;
+  updates: TablesUpdate<'accounts_receivable'> & { payment_method?: string };
 }
 
-const updateAccountReceivable = async ({ id, updates }: UpdateParams) => {
+const updateAccountReceivable = async ({ id, updates, userId }: UpdateParams) => {
+  const { data: current, error: fetchError } = await supabase
+    .from('accounts_receivable')
+    .select('status, payment_method')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    throw new Error(fetchError.message);
+  }
+
   const { data, error } = await supabase
     .from('accounts_receivable')
     .update(updates)
@@ -18,6 +29,29 @@ const updateAccountReceivable = async ({ id, updates }: UpdateParams) => {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  const statusChanged =
+    updates.status !== undefined && updates.status !== current?.status;
+  const methodChanged =
+    updates.payment_method !== undefined &&
+    updates.payment_method !== current?.payment_method;
+
+  if (statusChanged || methodChanged) {
+    const { error: logError } = await supabase
+      .from('accounts_receivable_logs')
+      .insert({
+        account_id: id,
+        old_status: statusChanged ? current?.status : null,
+        new_status: statusChanged ? updates.status : null,
+        old_method: methodChanged ? current?.payment_method : null,
+        new_method: methodChanged ? updates.payment_method : null,
+        user_id: userId || null,
+      });
+
+    if (logError) {
+      throw new Error(logError.message);
+    }
   }
 
   return data;

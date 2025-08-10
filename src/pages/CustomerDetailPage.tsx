@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useCustomer } from '@/hooks/useCustomer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Mail, Phone, MapPin, MessageSquare, Edit, Plus, Trash, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, MessageSquare, Edit, Plus, Trash, CheckCircle2, Loader2, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TablesInsert } from '@/integrations/supabase/types';
+import { useAccountsReceivableLogs } from '@/hooks/useAccountsReceivableLogs';
 
 const CustomerDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +35,9 @@ const CustomerDetailPage = () => {
   const updateAccountReceivableMutation = useUpdateAccountReceivable();
   const deleteAccountReceivableMutation = useDeleteAccountReceivable();
   const createAccountReceivableMutation = useCreateAccountReceivable();
+
+  const [historyAccountId, setHistoryAccountId] = useState<string | null>(null);
+  const { data: historyLogs, isLoading: isLoadingHistory } = useAccountsReceivableLogs(historyAccountId ?? undefined);
 
   const cleanPhone = customer?.phone ? customer.phone.replace(/\D/g, '') : '';
   const hasWhatsApp = cleanPhone.length >= 10;
@@ -122,8 +126,38 @@ const CustomerDetailPage = () => {
                       <TableCell>{getStatusBadge(ar.status)}</TableCell>
                       <TableCell>{ar.received_date ? format(parseISO(ar.received_date), 'dd/MM/yyyy') : '-'}</TableCell>
                       <TableCell className="flex gap-2">
-                        {ar.status === 'pending' && <Button variant="outline" size="sm" onClick={() => handleMarkAsPaid(ar.id)} disabled={updateAccountReceivableMutation.isPending && updateAccountReceivableMutation.variables?.id === ar.id}>{updateAccountReceivableMutation.isPending && updateAccountReceivableMutation.variables?.id === ar.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <CheckCircle2 className="h-4 w-4"/>}</Button>}
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteEntry(ar.id)} disabled={deleteAccountReceivableMutation.isPending && deleteAccountReceivableMutation.variables?.id === ar.id}><Trash className="h-4 w-4"/></Button>
+                        <Button variant="outline" size="sm" onClick={() => setHistoryAccountId(ar.id)}>
+                          <History className="h-4 w-4" />
+                        </Button>
+                        {ar.status === 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMarkAsPaid(ar.id)}
+                            disabled={
+                              updateAccountReceivableMutation.isPending &&
+                              updateAccountReceivableMutation.variables?.id === ar.id
+                            }
+                          >
+                            {updateAccountReceivableMutation.isPending &&
+                            updateAccountReceivableMutation.variables?.id === ar.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteEntry(ar.id)}
+                          disabled={
+                            deleteAccountReceivableMutation.isPending &&
+                            deleteAccountReceivableMutation.variables?.id === ar.id
+                          }
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -133,6 +167,37 @@ const CustomerDetailPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      <Dialog open={!!historyAccountId} onOpenChange={(open) => !open && setHistoryAccountId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Histórico da Conta</DialogTitle>
+          </DialogHeader>
+          {isLoadingHistory ? (
+            <p>Carregando...</p>
+          ) : historyLogs && historyLogs.length > 0 ? (
+            <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+              {historyLogs.map((log) => (
+                <li key={log.changed_at} className="text-sm">
+                  {format(parseISO(log.changed_at), 'dd/MM/yyyy HH:mm')} –
+                  {log.old_status !== log.new_status && (
+                    <span>
+                      Status: {log.old_status || '-'} → {log.new_status || '-'}
+                      {log.old_method !== log.new_method ? '; ' : ''}
+                    </span>
+                  )}
+                  {log.old_method !== log.new_method && (
+                    <span>
+                      Método: {log.old_method || '-'} → {log.new_method || '-'}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum histórico.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
