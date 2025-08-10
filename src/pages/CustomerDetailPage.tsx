@@ -39,10 +39,15 @@ const CustomerDetailPage = () => {
   const hasWhatsApp = cleanPhone.length >= 10;
 
   const handleMarkAsPaid = (entryId: string) => {
+    const method = window.prompt(
+      'Informe a forma de pagamento (ex: pix, dinheiro)',
+      '',
+    );
+    if (!method) return;
     updateAccountReceivableMutation.mutate({
       id: entryId,
       customerId: id,
-      updates: { status: 'paid', received_date: new Date().toISOString() }
+      updates: { status: 'paid', received_date: new Date().toISOString(), actual_payment_method: method }
     }, {
       onSuccess: () => toast({ title: 'Sucesso', description: 'Lançamento marcado como pago.' }),
       onError: (e) => toast({ title: 'Erro', description: e.message, variant: 'destructive' })
