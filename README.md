@@ -72,7 +72,7 @@ Para executar este projeto localmente, siga os passos abaixo.
     ```sh
     npm run dev
     ```
-    A aplicação estará disponível em `http://localhost:5173` (ou outra porta indicada no terminal).
+    A aplicação estará disponível em `http://localhost:8080` (ou outra porta indicada no terminal).
 
 4.  **Para build de produção:**
     ```sh
