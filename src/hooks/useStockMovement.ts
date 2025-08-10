@@ -5,7 +5,7 @@ import { TablesInsert } from '@/integrations/supabase/types';
 type NewStockMovement = TablesInsert<'stock_movements'>;
 
 const createStockMovement = async (movement: NewStockMovement) => {
-  const { error } = await supabase.from('stock_movemovements').insert(movement);
+  const { error } = await supabase.from('stock_movements').insert(movement);
 
   if (error) {
     throw new Error(error.message);

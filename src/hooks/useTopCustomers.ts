@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TopCustomer } from '@/integrations/supabase/types';
 
 const fetchTopCustomers = async (limit: number): Promise<TopCustomer[]> => {
-  const { data, error } = await supabase.rpc('get_top_customers', {
+  const { data, error } = await (supabase.rpc as any)('get_top_customers', {
     p_limit: limit,
   });
 
@@ -11,7 +11,7 @@ const fetchTopCustomers = async (limit: number): Promise<TopCustomer[]> => {
     throw new Error(`Error fetching top customers: ${error.message}`);
   }
 
-  return data;
+  return data as TopCustomer[];
 };
 
 export const useTopCustomers = (limit: number) => {

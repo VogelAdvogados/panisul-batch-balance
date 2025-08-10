@@ -8,17 +8,20 @@ export interface FinancialReportParams {
 }
 
 const fetchFinancialReport = async ({ startDate, endDate }: FinancialReportParams): Promise<FinancialReportData> => {
-  const { data, error } = await supabase.rpc('get_financial_report', {
-    p_start_date: startDate,
-    p_end_date: endDate,
-  });
+  const { data, error } = await (supabase.rpc as any)(
+    'get_financial_report',
+    {
+      p_start_date: startDate,
+      p_end_date: endDate,
+    },
+  );
 
   if (error) {
     throw new Error(`Error fetching financial report: ${error.message}`);
   }
 
   // The RPC function returns a single JSON object with two arrays
-  return data;
+  return data as FinancialReportData;
 };
 
 export const useFinancialReport = () => {
