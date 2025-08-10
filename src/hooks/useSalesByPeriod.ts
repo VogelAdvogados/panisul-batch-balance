@@ -5,7 +5,7 @@ import { SalesLast7Days as SalesByPeriodData } from '@/integrations/supabase/typ
 export type SalesPeriod = '7d' | '30d' | 'this_month';
 
 const fetchSalesByPeriod = async (period: SalesPeriod): Promise<SalesByPeriodData[]> => {
-  const { data, error } = await supabase.rpc('get_sales_by_period', {
+  const { data, error } = await (supabase.rpc as any)('get_sales_by_period', {
     p_period: period,
   });
 
@@ -13,7 +13,7 @@ const fetchSalesByPeriod = async (period: SalesPeriod): Promise<SalesByPeriodDat
     throw new Error(`Error fetching sales chart data: ${error.message}`);
   }
 
-  return data;
+  return data as SalesByPeriodData[];
 };
 
 export const useSalesByPeriod = (period: SalesPeriod) => {

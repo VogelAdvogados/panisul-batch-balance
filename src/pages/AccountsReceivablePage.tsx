@@ -115,8 +115,10 @@ export default function AccountsReceivablePage() {
     updateAccountMutation.mutate(
       {
         id: accountId,
-        status: "received",
-        received_date: new Date().toISOString(),
+        updates: {
+          status: "received",
+          received_date: new Date().toISOString(),
+        },
       },
       {
         onSuccess: () => {

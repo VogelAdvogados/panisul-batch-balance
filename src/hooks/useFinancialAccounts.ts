@@ -3,13 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { FinancialAccountWithBalance } from '@/integrations/supabase/types';
 
 const fetchFinancialAccounts = async (): Promise<FinancialAccountWithBalance[]> => {
-  const { data, error } = await supabase.rpc('get_financial_accounts_with_balances');
+  const { data, error } = await (supabase.rpc as any)(
+    'get_financial_accounts_with_balances',
+  );
 
   if (error) {
     throw new Error(`Error fetching financial accounts: ${error.message}`);
   }
 
-  return data;
+  return data as FinancialAccountWithBalance[];
 };
 
 export const useFinancialAccounts = () => {

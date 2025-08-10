@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardStats } from '@/integrations/supabase/types';
 
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
-  const { data, error } = await supabase.rpc('get_dashboard_stats');
+  const { data, error } = await (supabase.rpc as any)('get_dashboard_stats');
 
   if (error) {
     throw new Error(`Error fetching dashboard stats: ${error.message}`);
@@ -11,7 +11,7 @@ const fetchDashboardStats = async (): Promise<DashboardStats> => {
 
   // The data from rpc is returned as a single JSON object.
   // We assume the structure matches our DashboardStats type.
-  return data;
+  return data as DashboardStats;
 };
 
 export const useDashboardStats = () => {

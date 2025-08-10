@@ -33,7 +33,7 @@ import { useRecipes } from "@/hooks/useRecipes"
 import { useCreateSale } from "@/hooks/useCreateSale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/ui/PageHeader"
-import { Tables, TablesInsert } from "@/integrations/supabase/types"
+import { Tables, TablesInsert, RecipeWithIngredients } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { format, parseISO } from "date-fns"
 
@@ -56,6 +56,14 @@ const SalesTab = () => {
   const { data: customers, isLoading: isLoadingCustomers } = useCustomers()
   const { data: recipes, isLoading: isLoadingRecipes } = useRecipes()
   const createSaleMutation = useCreateSale()
+
+  const getRecipeCost = (recipe: RecipeWithIngredients) => {
+    return recipe.recipe_ingredients.reduce((sum, ri) => {
+      const qty = Number(ri.quantity) || 0
+      const cost = Number(ri.ingredients?.cost_per_unit) || 0
+      return sum + qty * cost
+    }, 0)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -114,9 +122,12 @@ const SalesTab = () => {
     
     if (field === "quantity" || field === "unit_price") {
       item.total_price = (item.quantity || 0) * (item.unit_price || 0)
-    } else if (field === 'recipe_id') {
-      const recipe = recipes?.find(r => r.id === value);
-      item.unit_price = recipe?.cost_per_unit ? recipe.cost_per_unit * 1.5 : 0; // default markup
+    } else if (field === "recipe_id") {
+      const recipe = recipes?.find((r) => r.id === value)
+      const costPerUnit = recipe
+        ? getRecipeCost(recipe) / (Number(recipe.yield_quantity) || 1)
+        : 0
+      item.unit_price = costPerUnit * 1.5 // default markup
       item.total_price = (item.quantity || 0) * (item.unit_price || 0)
     }
     
