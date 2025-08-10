@@ -41,13 +41,19 @@ Para executar este projeto localmente, siga os passos abaixo.
 
 ### Pré-requisitos
 
--   Node.js e npm (ou um gerenciador de pacotes compatível)
+-   Node.js e npm (ou um gerenciador de pacotes compatível).
 -   Uma instância do Supabase com o schema de banco de dados correspondente (ver `supabase/migrations`).
--   Um arquivo `.env` na raiz do projeto com as credenciais do Supabase:
+
+### Configuração de Ambiente
+
+1.  **Crie um arquivo de ambiente:**
+    Copie o arquivo de exemplo `.env.example` para um novo arquivo chamado `.env` na raiz do projeto.
+    ```sh
+    cp .env.example .env
     ```
-    VITE_SUPABASE_URL=URL_DO_SEU_PROJETO_SUPABASE
-    VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
-    ```
+
+2.  **Adicione suas credenciais do Supabase:**
+    Abra o arquivo `.env` e preencha com a URL e a Chave Anônima (Anon Key) do seu projeto Supabase. Você pode encontrar esses valores no painel do seu projeto em `Configurações > API`.
 
 ### Passos
 
