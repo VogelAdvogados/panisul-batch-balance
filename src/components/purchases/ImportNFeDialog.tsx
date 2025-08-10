@@ -8,6 +8,51 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 
+const SIMILARITY_THRESHOLD = 0.6
+
+function levenshtein(a: string, b: string): number {
+  const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]) as number[][]
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      matrix[i][j] =
+        b[i - 1] === a[j - 1]
+          ? matrix[i - 1][j - 1]
+          : Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+    }
+  }
+  return matrix[b.length][a.length]
+}
+
+function similarity(a: string, b: string): number {
+  const distance = levenshtein(a.toLowerCase(), b.toLowerCase())
+  return 1 - distance / Math.max(a.length, b.length, 1)
+}
+
+function findBestMatch<T>(
+  list: T[],
+  getString: (item: T) => string,
+  term: string,
+  threshold: number
+): { best?: T; candidates?: T[] } {
+  let bestScore = 0
+  let bestItems: T[] = []
+  for (const item of list) {
+    const score = similarity(getString(item), term)
+    if (score > bestScore) {
+      bestScore = score
+      bestItems = [item]
+    } else if (score === bestScore) {
+      bestItems.push(item)
+    }
+  }
+  if (bestScore >= threshold) {
+    if (bestItems.length === 1) return { best: bestItems[0] }
+    return { candidates: bestItems }
+  }
+  return {}
+}
+
 interface Supplier { id: string; name: string; cnpj?: string }
 interface Ingredient { id: string; name: string; unit: string }
 
@@ -17,6 +62,7 @@ interface ParsedItem {
   unit_price: number
   total_price: number
   ingredient_id?: string
+  candidates?: Ingredient[]
 }
 
 interface Props {
@@ -29,7 +75,7 @@ interface Props {
 
 export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, onImported }: Props) {
   const { toast } = useToast()
-  const [file, setFile] = useState<File | null>(null)
+  const [, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [supplierName, setSupplierName] = useState("")
   const [supplierCNPJ, setSupplierCNPJ] = useState("")
@@ -38,12 +84,37 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
   const [items, setItems] = useState<ParsedItem[]>([])
   const [ocrRaw, setOcrRaw] = useState("")
 
+  const [supplierOptions, setSupplierOptions] = useState<Supplier[]>([])
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | undefined>(undefined)
+
+  useEffect(() => {
+    if (!supplierName || supplierCNPJ) {
+      setSupplierOptions([])
+      setSelectedSupplier(undefined)
+      return
+    }
+    const { best, candidates } = findBestMatch(suppliers, (s) => s.name, supplierName, SIMILARITY_THRESHOLD)
+    if (candidates?.length) {
+      setSupplierOptions(candidates)
+      setSelectedSupplier(undefined)
+    } else if (best) {
+      setSupplierOptions([])
+      setSelectedSupplier(best)
+    } else {
+      setSupplierOptions([])
+      setSelectedSupplier(undefined)
+    }
+  }, [supplierName, supplierCNPJ, suppliers])
+
   const matchedSupplier = useMemo(() => {
     if (!supplierCNPJ && !supplierName) return undefined
-    const byCnpj = suppliers.find((s) => s.cnpj && supplierCNPJ && s.cnpj.replace(/\D/g,"") === supplierCNPJ.replace(/\D/g,""))
+    const clean = (v: string) => v.replace(/\D/g, "")
+    const byCnpj = suppliers.find(
+      (s) => s.cnpj && supplierCNPJ && clean(s.cnpj) === clean(supplierCNPJ)
+    )
     if (byCnpj) return byCnpj
-    return suppliers.find((s) => s.name?.toLowerCase().includes(supplierName.toLowerCase()))
-  }, [suppliers, supplierCNPJ, supplierName])
+    return selectedSupplier
+  }, [suppliers, supplierCNPJ, supplierName, selectedSupplier])
 
   const handleFile = async (f: File) => {
     setFile(f)
@@ -59,7 +130,8 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
         form.append("file", f, f.name)
         form.append("language", "por")
 
-        const baseUrl = (supabase as any).supabaseUrl || (supabase as any)._url || "https://wfzgvuscivyzwuoaumto.supabase.co"
+        const supa = supabase as unknown as { supabaseUrl?: string; _url?: string }
+        const baseUrl = supa.supabaseUrl || supa._url || "https://wfzgvuscivyzwuoaumto.supabase.co"
         const url = `${baseUrl}/functions/v1/ocrspace-proxy`
         const res = await fetch(url, { method: "POST", body: form })
         const data = await res.json()
@@ -77,10 +149,11 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
         setItems([{ description: "", quantity: 0, unit_price: 0, total_price: 0 }])
       }
       toast({ title: "Arquivo lido", description: "Revise os dados e confirme" })
-    } catch (e:any) {
-      console.error(e)
-      toast({ title: "Erro", description: e.message || "Falha ao importar arquivo", variant: "destructive" })
-    } finally {
+      } catch (e) {
+        console.error(e)
+        const message = e instanceof Error ? e.message : String(e)
+        toast({ title: "Erro", description: message || "Falha ao importar arquivo", variant: "destructive" })
+      } finally {
       setIsLoading(false)
     }
   }
@@ -104,14 +177,19 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
         const vUn = parseFloat(prod?.getElementsByTagName("vUnCom")[0]?.textContent || "0")
         const vProd = parseFloat(prod?.getElementsByTagName("vProd")[0]?.textContent || (qCom*vUn).toString())
 
-        // tenta casar ingrediente por nome aproximado (case-insensitive substring)
-        const match = ingredients.find((ing) => desc.toLowerCase().includes(ing.name.toLowerCase()))
+        const { best, candidates } = findBestMatch(
+          ingredients,
+          (ing) => ing.name,
+          desc,
+          SIMILARITY_THRESHOLD
+        )
         return {
           description: desc,
           quantity: qCom,
           unit_price: vUn,
           total_price: vProd,
-          ingredient_id: match?.id,
+          ingredient_id: best?.id,
+          candidates,
         }
       })
       setItems(parsed.length ? parsed : [{ description: "", quantity: 0, unit_price: 0, total_price: 0 }])
@@ -121,19 +199,21 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
     }
   }
 
-  const updateItem = (idx: number, field: keyof ParsedItem, value: any) => {
+  const updateItem = <K extends keyof ParsedItem>(idx: number, field: K, value: ParsedItem[K]) => {
     const copy = [...items]
-    ;(copy[idx] as any)[field] = value
+    copy[idx] = { ...copy[idx], [field]: value }
     if (field === "quantity" || field === "unit_price") {
       const q = Number(copy[idx].quantity || 0)
       const u = Number(copy[idx].unit_price || 0)
       copy[idx].total_price = q * u
     }
+    if (field === "ingredient_id") {
+      copy[idx].candidates = undefined
+    }
     setItems(copy)
   }
 
   const addRow = () => setItems([...items, { description: "", quantity: 0, unit_price: 0, total_price: 0 }])
-  const removeRow = (i: number) => setItems(items.filter((_, idx) => idx !== i))
 
   const confirmImport = async () => {
     try {
@@ -179,10 +259,11 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
       toast({ title: "Importado", description: "Compra criada. Revise e confirme para atualizar estoque." })
       onOpenChange(false)
       onImported?.()
-    } catch (e:any) {
-      console.error(e)
-      toast({ title: "Erro", description: e.message || "Falha ao lançar compra", variant: "destructive" })
-    } finally {
+      } catch (e) {
+        console.error(e)
+        const message = e instanceof Error ? e.message : String(e)
+        toast({ title: "Erro", description: message || "Falha ao lançar compra", variant: "destructive" })
+      } finally {
       setIsLoading(false)
     }
   }
@@ -205,6 +286,31 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
             <div className="space-y-3">
               <Label>Fornecedor</Label>
               <Input placeholder="Nome" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+              {supplierOptions.length > 1 && (
+                <Select
+                  value={selectedSupplier?.id}
+                  onValueChange={(v) => {
+                    const s = supplierOptions.find((o) => o.id === v)
+                    setSelectedSupplier(s)
+                    if (s) {
+                      setSupplierName(s.name)
+                      setSupplierCNPJ(s.cnpj || "")
+                    }
+                    setSupplierOptions([])
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supplierOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input placeholder="CNPJ" value={supplierCNPJ} onChange={(e) => setSupplierCNPJ(e.target.value)} />
               <Input placeholder="Número da NFe" value={nfeNumber} onChange={(e) => setNfeNumber(e.target.value)} />
               <Textarea placeholder="Observações" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -230,9 +336,18 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
                         <SelectValue placeholder="Ingrediente" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ingredients.map((ing) => (
-                          <SelectItem key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</SelectItem>
+                        {it.candidates?.map((ing) => (
+                          <SelectItem key={ing.id} value={ing.id}>
+                            {ing.name} ({ing.unit})
+                          </SelectItem>
                         ))}
+                        {ingredients
+                          .filter((ing) => !it.candidates?.some((c) => c.id === ing.id))
+                          .map((ing) => (
+                            <SelectItem key={ing.id} value={ing.id}>
+                              {ing.name} ({ing.unit})
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
