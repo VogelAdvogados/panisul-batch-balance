@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -55,8 +56,10 @@ const RecipesTab = () => {
     RecipeIngredientForm[]
   >([])
   const { toast } = useToast()
+  const [searchParams] = useSearchParams()
+  const searchTerm = searchParams.get("search") || ""
 
-  const { data: recipes, isLoading, isError, error } = useRecipes()
+  const { data: recipes, isLoading, isError, error } = useRecipes(searchTerm)
   const { data: ingredients, isLoading: isLoadingIngredients } =
     useIngredients()
   const createRecipeMutation = useCreateRecipe()

@@ -196,7 +196,7 @@ export default function Dashboard() {
                 id: p.product_id,
                 name: p.product_name,
                 value: p.total_quantity_sold,
-                linkTo: `/receitas` // Placeholder link
+                linkTo: `/receitas?search=${encodeURIComponent(p.product_name)}`
               })) || []}
               valueFormatter={(val) => `${val} un.`}
             />
