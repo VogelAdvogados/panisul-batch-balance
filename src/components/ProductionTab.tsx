@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -40,6 +40,7 @@ import { useIngredients } from "@/hooks/useIngredients"
 import { AlertCircle } from "lucide-react"
 import { Ingredient } from "@/integrations/supabase/types"
 import { PageHeader } from "@/components/ui/PageHeader"
+import { useRecipeSales } from "@/hooks/useRecipeSales"
 
 const ProductionInfo = ({
   recipe,
@@ -121,6 +122,29 @@ const ProductionTab = () => {
   const { data: recipes, isLoading: isLoadingRecipes } = useRecipes()
   const { data: allIngredients } = useIngredients()
   const createProductionMutation = useCreateProduction()
+  const { data: recipeSales } = useRecipeSales(formData.recipe_id)
+  const [recommendedQuantity, setRecommendedQuantity] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!selectedRecipe) {
+      setRecommendedQuantity(null)
+      return
+    }
+
+    const quantities = selectedRecipe.recipe_ingredients.map((ri) => {
+      const ing = allIngredients?.find((i) => i.id === ri.ingredients?.id)
+      const available = ing?.current_stock || 0
+      return ri.quantity > 0 ? Math.floor(available / ri.quantity) : 0
+    })
+
+    const maxProducible = quantities.length ? Math.min(...quantities) : 0
+    const demand = recipeSales ?? 0
+    const suggestion = Math.min(maxProducible, demand || maxProducible)
+    const finalSuggestion = suggestion || 1
+
+    setRecommendedQuantity(finalSuggestion)
+    setFormData((prev) => ({ ...prev, quantity_produced: finalSuggestion }))
+  }, [selectedRecipe, recipeSales, allIngredients])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -281,6 +305,11 @@ const ProductionTab = () => {
                       }
                       required
                     />
+                    {recommendedQuantity !== null && (
+                      <p className="text-xs text-muted-foreground">
+                        Sugestão: {recommendedQuantity}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="production_date">Data de Produção</Label>
