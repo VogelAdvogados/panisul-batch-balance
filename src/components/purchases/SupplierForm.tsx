@@ -4,16 +4,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
-import { TablesInsert } from "@/integrations/supabase/types"
+import { Supplier } from "@/types"
 
 interface SupplierFormProps {
-  onSubmit: (supplierData: TablesInsert<'suppliers'>) => void
+  onSubmit: (supplierData: Omit<Supplier, 'id'>) => void
   onCancel: () => void
   isSubmitting: boolean
 }
 
 export const SupplierForm = ({ onSubmit, onCancel, isSubmitting }: SupplierFormProps) => {
-  const [supplierForm, setSupplierForm] = useState<TablesInsert<'suppliers'>>({
+  const [supplierForm, setSupplierForm] = useState<Omit<Supplier, 'id'>>({
     name: '',
     cnpj: '',
     email: '',

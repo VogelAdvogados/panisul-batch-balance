@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Ingredient } from '@/integrations/supabase/types';
+import { Ingredient } from '@/types';
 
 const fetchIngredients = async (): Promise<Ingredient[]> => {
   const { data, error } = await supabase
@@ -12,7 +12,7 @@ const fetchIngredients = async (): Promise<Ingredient[]> => {
     throw new Error(error.message);
   }
 
-  return data || [];
+  return (data as Ingredient[]) || [];
 };
 
 export const useIngredients = () => {

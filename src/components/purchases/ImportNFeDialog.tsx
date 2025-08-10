@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,17 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-
-interface Supplier { id: string; name: string; cnpj?: string }
-interface Ingredient { id: string; name: string; unit: string }
-
-interface ParsedItem {
-  description: string
-  quantity: number
-  unit_price: number
-  total_price: number
-  ingredient_id?: string
-}
+import { Supplier, Ingredient, ParsedItem } from "@/types"
 
 interface Props {
   open: boolean
@@ -29,7 +19,6 @@ interface Props {
 
 export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, onImported }: Props) {
   const { toast } = useToast()
-  const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [supplierName, setSupplierName] = useState("")
   const [supplierCNPJ, setSupplierCNPJ] = useState("")
@@ -46,7 +35,6 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
   }, [suppliers, supplierCNPJ, supplierName])
 
   const handleFile = async (f: File) => {
-    setFile(f)
     setIsLoading(true)
     try {
       const isXml = f.name.toLowerCase().endsWith(".xml") || f.type.includes("xml")
@@ -59,10 +47,14 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
         form.append("file", f, f.name)
         form.append("language", "por")
 
-        const baseUrl = (supabase as any).supabaseUrl || (supabase as any)._url || "https://wfzgvuscivyzwuoaumto.supabase.co"
+        const supabaseClient = supabase as unknown as { supabaseUrl?: string; _url?: string }
+        const baseUrl =
+          supabaseClient.supabaseUrl ||
+          supabaseClient._url ||
+          "https://wfzgvuscivyzwuoaumto.supabase.co"
         const url = `${baseUrl}/functions/v1/ocrspace-proxy`
         const res = await fetch(url, { method: "POST", body: form })
-        const data = await res.json()
+        const data: { success?: boolean; text?: string; error?: string } = await res.json()
         if (!res.ok || !data?.success) {
           throw new Error(data?.error || "Falha ao processar OCR")
         }
@@ -77,9 +69,10 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
         setItems([{ description: "", quantity: 0, unit_price: 0, total_price: 0 }])
       }
       toast({ title: "Arquivo lido", description: "Revise os dados e confirme" })
-    } catch (e:any) {
-      console.error(e)
-      toast({ title: "Erro", description: e.message || "Falha ao importar arquivo", variant: "destructive" })
+    } catch (e) {
+      const error = e as Error
+      console.error(error)
+      toast({ title: "Erro", description: error.message || "Falha ao importar arquivo", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -121,19 +114,20 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
     }
   }
 
-  const updateItem = (idx: number, field: keyof ParsedItem, value: any) => {
-    const copy = [...items]
-    ;(copy[idx] as any)[field] = value
+  const updateItem = (idx: number, field: keyof ParsedItem, value: string | number) => {
+    const updated = items.map((item, i) =>
+      i === idx ? ({ ...item, [field]: value } as ParsedItem) : item,
+    )
     if (field === "quantity" || field === "unit_price") {
-      const q = Number(copy[idx].quantity || 0)
-      const u = Number(copy[idx].unit_price || 0)
-      copy[idx].total_price = q * u
+      const q = Number(updated[idx].quantity || 0)
+      const u = Number(updated[idx].unit_price || 0)
+      updated[idx].total_price = q * u
     }
-    setItems(copy)
+    setItems(updated)
   }
 
-  const addRow = () => setItems([...items, { description: "", quantity: 0, unit_price: 0, total_price: 0 }])
-  const removeRow = (i: number) => setItems(items.filter((_, idx) => idx !== i))
+  const addRow = () =>
+    setItems([...items, { description: "", quantity: 0, unit_price: 0, total_price: 0 }])
 
   const confirmImport = async () => {
     try {
@@ -179,9 +173,10 @@ export function ImportNFeDialog({ open, onOpenChange, suppliers, ingredients, on
       toast({ title: "Importado", description: "Compra criada. Revise e confirme para atualizar estoque." })
       onOpenChange(false)
       onImported?.()
-    } catch (e:any) {
-      console.error(e)
-      toast({ title: "Erro", description: e.message || "Falha ao lançar compra", variant: "destructive" })
+    } catch (e) {
+      const error = e as Error
+      console.error(error)
+      toast({ title: "Erro", description: error.message || "Falha ao lançar compra", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }

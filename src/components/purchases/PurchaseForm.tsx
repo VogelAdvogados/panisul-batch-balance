@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, X, Loader2 } from "lucide-react"
-import { TablesInsert, Supplier, Ingredient } from "@/integrations/supabase/types"
+import { TablesInsert } from "@/integrations/supabase/types"
+import { Supplier, Ingredient } from "@/types"
 
 interface PurchaseItemForm {
   ingredient_id: string
@@ -60,9 +61,16 @@ export const PurchaseForm = ({
     setPurchaseItems([...purchaseItems, { ingredient_id: '', quantity: 0, unit_price: 0, total_price: 0 }])
   }
 
-  const updateItem = (index: number, field: keyof PurchaseItemForm, value: any) => {
+  const updateItem = (
+    index: number,
+    field: keyof PurchaseItemForm,
+    value: string | number,
+  ) => {
     const updatedItems = [...purchaseItems]
-    updatedItems[index] = { ...updatedItems[index], [field]: value }
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value,
+    }
 
     if (field === 'quantity' || field === 'unit_price') {
       updatedItems[index].total_price = (updatedItems[index].quantity || 0) * (updatedItems[index].unit_price || 0)

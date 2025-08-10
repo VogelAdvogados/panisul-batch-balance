@@ -1,13 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { TablesInsert } from '@/integrations/supabase/types';
+import { Supplier } from '@/types';
 
-type NewSupplier = TablesInsert<'suppliers'>;
+type NewSupplier = Omit<Supplier, 'id'>;
 
 const createSupplier = async (supplier: NewSupplier) => {
   const { data, error } = await supabase
     .from('suppliers')
-    .insert(supplier)
+    .insert(supplier as TablesInsert<'suppliers'>)
     .select()
     .single();
 

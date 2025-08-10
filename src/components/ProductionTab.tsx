@@ -38,7 +38,7 @@ import {
 import { format, parseISO } from "date-fns"
 import { useIngredients } from "@/hooks/useIngredients"
 import { AlertCircle } from "lucide-react"
-import { Ingredient } from "@/integrations/supabase/types"
+import { Ingredient } from "@/types"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { useRecipeSales } from "@/hooks/useRecipeSales"
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Supplier } from '@/integrations/supabase/types';
+import { Supplier } from '@/types';
 
 const fetchSuppliers = async (): Promise<Supplier[]> => {
   const { data, error } = await supabase
@@ -12,7 +12,7 @@ const fetchSuppliers = async (): Promise<Supplier[]> => {
     throw new Error(error.message);
   }
 
-  return data || [];
+  return (data as Supplier[]) || [];
 };
 
 export const useSuppliers = () => {
