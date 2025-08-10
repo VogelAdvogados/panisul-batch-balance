@@ -14,40 +14,18 @@ interface CreatePurchaseParams {
 }
 
 const createPurchase = async ({ purchaseData, itemsData }: CreatePurchaseParams) => {
-  // Step 1: Insert the main purchase record
-  const { data: purchase, error: purchaseError } = await supabase
-    .from('purchases')
-    .insert(purchaseData)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('create_purchase_with_items', {
+    purchase_data: purchaseData,
+    items_data: itemsData,
+  }).single();
 
-  if (purchaseError) {
-    throw new Error(`Failed to create purchase: ${purchaseError.message}`);
+  if (error) {
+    // The RPC function handles the transaction, so if there's an error,
+    // nothing should be committed to the database.
+    throw new Error(`Failed to create purchase transactionally: ${error.message}`);
   }
 
-  if (!purchase) {
-    throw new Error("Purchase creation did not return a result.");
-  }
-
-  // Step 2: Prepare and insert the associated purchase items
-  const itemsToInsert = itemsData.map(item => ({
-    ...item,
-    purchase_id: purchase.id,
-  }));
-
-  const { error: itemsError } = await supabase
-    .from('purchase_items')
-    .insert(itemsToInsert);
-
-  if (itemsError) {
-    // IMPORTANT: This is not transactional. If this step fails, the purchase
-    // record will still exist in the database without any items.
-    // A better solution would be to wrap this logic in a Supabase database function (RPC).
-    // For now, we proceed with the original logic but throw an error.
-    throw new Error(`Failed to insert purchase items: ${itemsError.message}`);
-  }
-
-  return purchase;
+  return data;
 };
 
 export const useCreatePurchase = () => {
