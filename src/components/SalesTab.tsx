@@ -33,7 +33,7 @@ import { useRecipes } from "@/hooks/useRecipes"
 import { useCreateSale } from "@/hooks/useCreateSale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/ui/PageHeader"
-import { Tables, TablesInsert } from "@/integrations/supabase/types"
+import { Tables, TablesInsert, Database } from "@/integrations/supabase/types"
 import { Badge } from "@/components/ui/badge"
 import { format, parseISO } from "date-fns"
 
@@ -50,6 +50,13 @@ const SalesTab = () => {
     notes: "",
   })
   const [saleItems, setSaleItems] = useState<SaleItemForm[]>([])
+  const [financeData, setFinanceData] = useState<{
+    due_date: string
+    expected_payment_method: Database['public']['Enums']['payment_method']
+  }>({
+    due_date: new Date().toISOString().split("T")[0],
+    expected_payment_method: 'cash',
+  })
   const { toast } = useToast()
 
   const { data: sales, isLoading: isLoadingSales } = useSales()
@@ -70,7 +77,11 @@ const SalesTab = () => {
     }
 
     createSaleMutation.mutate(
-      { saleData: formData, itemsData: saleItems },
+      {
+        saleData: formData,
+        itemsData: saleItems,
+        financialData: formData.status === 'pending' ? financeData : undefined,
+      },
       {
         onSuccess: () => {
           toast({
@@ -84,6 +95,10 @@ const SalesTab = () => {
             notes: "",
           })
           setSaleItems([])
+          setFinanceData({
+            due_date: new Date().toISOString().split("T")[0],
+            expected_payment_method: 'cash',
+          })
           setShowForm(false)
         },
         onError: (error) => {
@@ -215,6 +230,40 @@ const SalesTab = () => {
                     </Select>
                   </div>
                 </div>
+
+                {formData.status === 'pending' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="due_date">Data de Vencimento</Label>
+                      <Input
+                        id="due_date"
+                        type="date"
+                        value={financeData.due_date}
+                        onChange={(e) =>
+                          setFinanceData({ ...financeData, due_date: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="expected_payment_method">Forma de Pagamento</Label>
+                      <Select
+                        value={financeData.expected_payment_method}
+                        onValueChange={(value: Database['public']['Enums']['payment_method']) =>
+                          setFinanceData({ ...financeData, expected_payment_method: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a forma" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Dinheiro</SelectItem>
+                          <SelectItem value="pix">Pix</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center mb-2">
